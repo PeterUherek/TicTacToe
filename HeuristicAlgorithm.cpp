@@ -14,10 +14,7 @@ void HeuristicAlgorithm::setPawn(const boost::shared_ptr<Pawn>& pawn)
 void HeuristicAlgorithm::UniquePositions(positionVec& positions) 
 {
 	std::sort(positions.begin(), positions.end());
-
-	std::vector<std::tuple<int, int>>::iterator it;
-	it = std::unique(positions.begin(), positions.end());
-
+	auto it = std::unique(positions.begin(), positions.end());
 	positions.resize(std::distance(positions.begin(), it));
 }
 
