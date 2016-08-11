@@ -10,7 +10,7 @@ public:
 	Pawn();
 	~Pawn();
 
-	char GetLabel();
+	char GetLabel() const;
 	static const std::vector<char> GetSymbols();
 
 private:

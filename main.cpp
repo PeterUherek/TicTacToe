@@ -9,11 +9,9 @@
 #include <string>
 
 
-
-
-
 int main()
 {
+
 	GameDirector director;
 	director.SetGame();
 	director.ConstructGame();

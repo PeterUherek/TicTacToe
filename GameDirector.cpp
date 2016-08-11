@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "GameDirector.h"
 #include "InputManager.h"
+#include "LoadGame.h"
 
 GameDirector::GameDirector() {}
 
@@ -16,7 +17,7 @@ int GameDirector::SetGame() {
 		return 0;
 	}
 	if (key == 'l' || key == 'L') {
-		//gameBuilder = boost::shared_ptr<GameBuilder>(new NewGame());
+		gameBuilder = boost::shared_ptr<GameBuilder>(new LoadGame());
 		return 0;
 	}
 	return 0;
@@ -29,7 +30,7 @@ int GameDirector::ConstructGame()
 	gameBuilder->buildBoard();
 	gameBuilder->buildValidator();
 	gameBuilder->buildUser();
-	gameBuilder->buildLabels();
+	gameBuilder->BuildBoardState();
 	return 0;
 }
 

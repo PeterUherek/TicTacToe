@@ -10,4 +10,4 @@ const char vinit[] = { 'x' ,'o' };
 const std::vector<char> Pawn::symbols(vinit, std::end(vinit));
 const std::vector<char> Pawn::GetSymbols() { return symbols; }
 
-char Pawn::GetLabel() {	return label; }
+char Pawn::GetLabel() const { return label; }

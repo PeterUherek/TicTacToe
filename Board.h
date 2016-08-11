@@ -21,18 +21,18 @@ public:
 	void Clear();
 
 	char GetEmptySquare();
-	int GetX();
-	int GetY();
+	int GetX() const;
+	int GetY() const;
 
 	const board_array GetDesk();
 
 private:
 	const char emptySquare = '-';
-	void SetDesk();
-
 	int x;
 	int y;
 	board_array desk;
+
+	void SetDesk();
 
 };
 

@@ -22,16 +22,25 @@ private:
 	boost::shared_ptr<Pawn> pawn;
 	boost::shared_ptr<Validation> valid;
 	boost::shared_ptr<ContextGame> testContext;
+	
+	// Multithread atributes
+	std::vector<int> scores;
+	boost::mutex guard;
 
 	// Functions
-	std::tuple<int, int> HeuristicAlgorithm::TryMoves(Board& board);
-	int HeuristicAlgorithm::RecursiveFinding(Board& board, int counter);
+	std::tuple<int, int> TryMoves(Board& board, const boost::shared_ptr<Pawn>& pawn);
+	std::tuple<int, int> TryMovesMultithread(Board& board, const boost::shared_ptr<Pawn>& pawn);
+	int RecursiveFinding(Board& board, int counter, const boost::shared_ptr<Pawn>& pawn, Validation& valid);
+	void RecursiveFindingMultithread(Board board, int counter, const boost::shared_ptr<Pawn>& pawn, int index);
 
+	boost::shared_ptr<Pawn> ChooseBestStrategy();
 	std::tuple<int, int> FirstRound();
-	ptrMementoVec SelectPositions(Board &board);
+
+	// Find positions functions
+	ptrMementoVec SelectPositions(Board &board, const Pawn& pawn);
 	positionVec ExtractOptionalMoves(Board &board, const Memento& mem);
 	void UniquePositions(HeuristicAlgorithm::positionVec& positions);
-	positionVec PrepareOptionalMoves(Board &board);
+	positionVec PrepareOptionalMoves(Board &board, const Pawn& pawn);
 	void GenerateOptionalPositions(Board& board, const Memento& mem, positionVec& positions);
 
 };

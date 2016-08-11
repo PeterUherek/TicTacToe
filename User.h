@@ -16,10 +16,14 @@ public:
 	virtual int Action() = 0;
 	virtual std::tuple<int, int> Move() = 0;
 	
-	int getScore();
-	std::string getName();
-	void addScore(const int& _score);
+	int GetBestScore();
+	int GetLastSocre();
+	boost::shared_ptr<Pawn> GetPawn();
+
+	std::string getName() const;
+	void setScore(const int& _score);
 	virtual void setLabel(const boost::shared_ptr<Pawn>& _label);
+
 
 	struct UserComparator {
 		bool operator()(const boost::shared_ptr<User>& lhs, const boost::shared_ptr<User>& rhs) const {
@@ -28,8 +32,9 @@ public:
 	};
 
 protected:
-	int score;
+	
 	std::string name;
+	std::vector<int> score = {0};
 	boost::shared_ptr<Pawn> label;
 
 };

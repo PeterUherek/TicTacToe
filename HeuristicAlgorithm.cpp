@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "HeuristicAlgorithm.h"
 #include "RandomStrategy.h"
+#include <boost/thread/thread.hpp>
+#include <type_traits>
 
 
 HeuristicAlgorithm::HeuristicAlgorithm(const int& depth) : depth(depth) {};
@@ -18,9 +20,9 @@ void HeuristicAlgorithm::UniquePositions(positionVec& positions)
 	positions.resize(std::distance(positions.begin(), it));
 }
 
-HeuristicAlgorithm::ptrMementoVec HeuristicAlgorithm::SelectPositions(Board &board)
+HeuristicAlgorithm::ptrMementoVec HeuristicAlgorithm::SelectPositions(Board &board, const Pawn& pawn)
 {
-	char label = pawn->GetLabel();
+	char label = pawn.GetLabel();
 	ptrMementoVec savedStates = context->GetSavedStates();
 	ptrMementoVec myStates(savedStates.size());
 
@@ -48,9 +50,9 @@ void HeuristicAlgorithm::GenerateOptionalPositions(Board& board, const Memento& 
 	}
 }
 
-HeuristicAlgorithm::positionVec HeuristicAlgorithm::PrepareOptionalMoves(Board &board) 
+HeuristicAlgorithm::positionVec HeuristicAlgorithm::PrepareOptionalMoves(Board &board, const Pawn& pawn)
 {
-	ptrMementoVec myStates = SelectPositions(board);
+	ptrMementoVec myStates = SelectPositions(board, pawn);
 	positionVec positions;
 
 	for (auto& mem : myStates) {
@@ -61,9 +63,9 @@ HeuristicAlgorithm::positionVec HeuristicAlgorithm::PrepareOptionalMoves(Board &
 	return positions;
 }
 
-std::tuple<int, int> HeuristicAlgorithm::TryMoves(Board& board)
+std::tuple<int, int> HeuristicAlgorithm::TryMoves(Board& board, const boost::shared_ptr<Pawn>& pawn)
 {	
-	positionVec positions = PrepareOptionalMoves(board);
+	positionVec positions = PrepareOptionalMoves(board, *pawn);
 	std::vector<int> positionsScore;
 	std::tuple<int, int> best;
 	int score = 99;
@@ -84,8 +86,8 @@ std::tuple<int, int> HeuristicAlgorithm::TryMoves(Board& board)
 			context->Undo();
 			return std::tuple<int, int>(x, y);
 		}
-
-		int m_score = RecursiveFinding(board, counter);
+		
+		int m_score = RecursiveFinding(board, counter, pawn, *valid);
 
 		if (m_score < score) {
 			score = m_score;
@@ -97,11 +99,117 @@ std::tuple<int, int> HeuristicAlgorithm::TryMoves(Board& board)
 	return best;
 }
 
-int HeuristicAlgorithm::RecursiveFinding(Board& board, int counter) 
-{
 
+std::tuple<int, int> HeuristicAlgorithm::TryMovesMultithread(Board& board, const boost::shared_ptr<Pawn>& pawn)
+{
+	positionVec positions = PrepareOptionalMoves(board, *pawn);
+	boost::thread_group tgroup;
+	std::vector<std::tuple<int,int>> vec;
+	scores.clear();
+
+	std::vector<int> positionsScore;
+	std::tuple<int, int> best;
+	int score = 99;
+	int counter = 1;
+	int i = 0;
+	for (auto &pos : positions) {
+
+		int x = std::get<0>(pos);
+		int y = std::get<1>(pos);
+
+		boost::shared_ptr<Memento> mem(new Memento(pawn, x, y));
+		context->TryMove(mem);
+
+		bool result = valid->IsWinner(x, y, pawn->GetLabel());
+		positionsScore.push_back(valid->GetScore());
+
+		if (result) {
+			context->Undo();
+			return std::tuple<int, int>(x, y);
+		}
+		
+		scores.push_back(0);
+
+		tgroup.create_thread(boost::bind(&HeuristicAlgorithm::RecursiveFindingMultithread, this, Board(board), counter, pawn, i));
+
+		vec.push_back(std::tuple<int, int>(x, y));
+		context->Undo();
+		i++;
+	}
+	
+	tgroup.join_all();
+	auto it = std::max_element(scores.begin(), scores.end());
+	int pos = std::distance(scores.begin(), it);	
+	best = vec[pos];
+	return best;
+}
+
+
+void HeuristicAlgorithm::RecursiveFindingMultithread(Board board, int counter, const boost::shared_ptr<Pawn>& pawn, int i)
+{
 	counter++;
-	positionVec positions = PrepareOptionalMoves(board);
+	boost::shared_ptr<Board> boardPtr = boost::make_shared<Board>(board);
+	boost::shared_ptr<Validation> val(new Validation(boardPtr, depth));
+	positionVec positions = PrepareOptionalMoves(board, *pawn);
+	std::vector<int> positionsScore;
+
+	if (counter > depth) {
+		boost::mutex::scoped_lock lock(guard);
+		//std::vector<int>::iterator it = scores.begin() + i;
+		//scores.insert(it,counter);
+		scores[i] = counter;
+		return;
+	}
+
+	for (auto &pos : positions) {
+
+		int x = std::get<0>(pos);
+		int y = std::get<1>(pos);
+
+		Memento mem(pawn, x, y);
+		boardPtr->Add(mem);
+
+		bool result = val->IsWinner(x, y, pawn->GetLabel());
+		positionsScore.push_back(val->GetScore());
+		
+		boardPtr->Undo(mem);
+
+		if (result) {
+			boost::mutex::scoped_lock lock(guard);
+			//std::vector<int>::iterator it = scores.begin() + i;
+			//scores.insert(it, counter);
+			scores[i] = counter;
+			return;
+		}
+	}
+
+	// Find maxium from vector
+	int index = std::distance(std::begin(positionsScore), std::max_element(positionsScore.begin(), positionsScore.end()));
+
+	auto pos = positions[index];
+
+	int x = std::get<0>(pos);
+	int y = std::get<1>(pos);
+
+	boost::shared_ptr<Memento> mem(new Memento(pawn, x, y));
+	int m_score = 0;
+	if (context->TryMove(mem)) {
+		m_score = RecursiveFinding(*boardPtr, counter, pawn, *val);
+		context->Undo();
+	}
+
+	boost::mutex::scoped_lock lock(guard);
+	//std::vector<int>::iterator it = scores.begin() + i;
+	//scores.insert(it, m_score);
+	scores.at(i) = m_score;
+}
+
+
+
+int HeuristicAlgorithm::RecursiveFinding(Board& board, int counter, const boost::shared_ptr<Pawn>& pawn, Validation& valid)
+{
+	counter++;
+	positionVec positions = PrepareOptionalMoves(board, *pawn);
 	std::vector<int> positionsScore;
 
 	if (counter > depth)
@@ -115,8 +223,8 @@ int HeuristicAlgorithm::RecursiveFinding(Board& board, int counter)
 		Memento mem(pawn, x, y);
 		board.Add(mem);
 
-		bool result = valid->IsWinner(x, y, pawn->GetLabel());
-		positionsScore.push_back(valid->GetScore());
+		bool result = valid.IsWinner(x, y, pawn->GetLabel());
+		positionsScore.push_back(valid.GetScore());
 		
 		board.Undo(mem);
 
@@ -135,7 +243,7 @@ int HeuristicAlgorithm::RecursiveFinding(Board& board, int counter)
 	boost::shared_ptr<Memento> mem(new Memento(pawn, x, y));
 	int m_score = 0;
 	if (context->TryMove(mem)) {
-		m_score = RecursiveFinding(board, counter);
+		m_score = RecursiveFinding(board, counter, pawn, valid);
 		context->Undo();
 	}
 
@@ -161,6 +269,29 @@ HeuristicAlgorithm::positionVec HeuristicAlgorithm::ExtractOptionalMoves(Board &
 }
 
 
+boost::shared_ptr<Pawn> HeuristicAlgorithm::ChooseBestStrategy()
+{
+	int myScore, opponentScore;
+	auto players = context->GetUsers();
+	boost::shared_ptr<Pawn> _pawn;
+
+	for (auto &player : players){
+		if (player->GetPawn()->GetLabel() == pawn->GetLabel()) {
+			myScore = player->GetLastSocre();
+		}else {
+			opponentScore = player->GetLastSocre();
+			_pawn = player->GetPawn();
+		}	
+	}
+
+	if(opponentScore <= myScore && opponentScore < 4)
+	{
+		_pawn = this->pawn;
+	}
+	
+	return _pawn;
+}
+
 std::tuple<int, int> HeuristicAlgorithm::FirstRound()
 {
 	RandomStrategy rand;
@@ -175,12 +306,30 @@ std::tuple<int, int> HeuristicAlgorithm::ChooseNextSetp()
 	{
 		return FirstRound();
 	}
-	else 
+	else
 	{
 		boost::shared_ptr<Board> boardPtr = context->GetBoard();
 		valid = boost::shared_ptr<Validation>(new Validation(boardPtr, depth));
+		boost::shared_ptr<Pawn> pawn = ChooseBestStrategy();
+		
+		clock_t begin = clock();
+		std::tuple<int, int> best = TryMovesMultithread(*boardPtr, pawn);
+		clock_t end = clock();
 
-		std::tuple<int, int> best = TryMoves(*boardPtr);
+		double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+
+		std::cout << "Multithread function: " << elapsed_secs << std::endl;
+
+		begin = clock();
+	  // best = TryMoves(*boardPtr, pawn);
+		end = clock();
+
+		elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+
+	//	std::cout << "NoMultithread function: " << elapsed_secs << std::endl;
+		
+
+		
 		return best;
 	}
 }

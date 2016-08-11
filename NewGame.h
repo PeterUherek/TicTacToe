@@ -19,12 +19,14 @@ public:
 	void buildBoard() override;
 	void buildUser() override;
 	void buildOptions() override;
-	void buildLabels() override;
 	void buildValidator() override;
+    void BuildBoardState() override;
+	void BuildOrderOfPlay() override;
 
 private:
 	void createAIPlayer();
 	void createHumanPlayer();
+	void buildLabels();
 
 };
 

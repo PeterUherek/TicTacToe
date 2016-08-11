@@ -2,38 +2,24 @@
 #include "TicTacToe.h"
 #include "HumanUser.h"
 #include "ConsoleManager.h"
+#include "SaveGame.h"
 
 #include <algorithm>
 #include <random>
 #include <iostream>
+#include <fstream>
 
 
 TicTacToe::TicTacToe() {}
-
-void TicTacToe::setDesk(const int& x, const int& y)
-{	
-	setGameContext();
-	context->setDesk(x, y);
-};
-
-void TicTacToe::setOptions(const int& opt) 
-{
-	options = opt;
-};
-
-void TicTacToe::addUser(const boost::shared_ptr<User>& usr)
-{
-	players.push_back(usr);
-}
 
 void TicTacToe::setValidator(const int& win) 
 {
 	validator = boost::shared_ptr<Validation>(new Validation(context->GetBoard(), win));
 }
 
-void TicTacToe::setGameContext()
+void TicTacToe::setGameContext(const boost::shared_ptr<ContextGame>& context)
 {
-	context = boost::shared_ptr<ContextGame>(new ContextGame());
+	this->context = context;
 }
 
 boost::shared_ptr<ContextGame> TicTacToe::getGameContext()
@@ -41,38 +27,15 @@ boost::shared_ptr<ContextGame> TicTacToe::getGameContext()
 	return context;
 }
 
-int TicTacToe::getOptions()
-{
-	return options;
-}
-
 int TicTacToe::getNumberLabelsForWin()
 {
 	return validator->GetNumberLabelsForWin();
-}
-
-void TicTacToe::assignPawns()
-{
-	std::vector<char> symbols = Pawn::GetSymbols();
-	VectorShuffle(symbols);
-	
-	int n = 0;
-	for (auto &player : players) {
-		char label = symbols[n];
-		boost::shared_ptr<Pawn> pawn(new Pawn(label, "red"));
-		labelMap[player] = pawn;
-		player->setLabel(pawn);
-		n++;
-	}
-
 }
 
 void TicTacToe::Play()
 {	
 	system("color 3A");
 	bool gameEnd = false;
-	
-	VectorShuffle(players);
 
 	std::cout << "Game start" << std::endl;
 	context->DrawBoard();
@@ -82,7 +45,6 @@ void TicTacToe::Play()
 	}while (!gameEnd);
 
 }
-
 
 bool TicTacToe::IsWin(const boost::shared_ptr<User>& player)
 {
@@ -99,13 +61,14 @@ bool TicTacToe::IsWin(const boost::shared_ptr<User>& player)
 		return true;
 	}
 
-	player->addScore(validator->GetScore());
+	player->setScore(validator->GetScore());
 	return false;
 }
 
 
 bool TicTacToe::GameLoop() 
 {
+	auto players = context->GetUsers();
 	for (auto& player : players) {
 
 		bool playerTurn = false;
@@ -132,6 +95,10 @@ bool TicTacToe::GameLoop()
 				break;
 			case 3:
 				Redo();
+				playerTurn = true;
+				break;
+			case 4:
+				Save(player);
 				playerTurn = true;
 				break;
 			}
@@ -175,26 +142,30 @@ void TicTacToe::Move(const boost::shared_ptr<User>& player)
 
 	do {
 		std::tuple<int, int> move = player->Move();
-		boost::shared_ptr<Pawn> pawn = labelMap[player];
+		boost::shared_ptr<Pawn> pawn = context->GetPawnFromUser(player);
 		mem = boost::shared_ptr<Memento>(new Memento(pawn, std::get<0>(move), std::get<1>(move)));
 	} while (!context->TryMove(mem));
 
 }
 
 void TicTacToe::WriteScore()
-{
+{	
+	auto players = context->GetUsers();
 	for (auto &player : players)
 	{
-		std::cout << player->getName() << ": " << player->getScore() << "  ";
+		std::cout << player->getName() << ": " << player->GetBestScore() << "  ";
 	}
 
 	std::cout << std::endl;
 }
 
-
-bool TicTacToe::Save()
+void TicTacToe::Save(const boost::shared_ptr<User>& player)
 {
-	return false;
+	boost::shared_ptr<SaveGame> saver(new SaveGame());
+	if (saver->Save(*context, *player) >= 0) {
+		std::cout << "You save the game!" << std::endl;
+	}
+
 }
 
 TicTacToe::~TicTacToe() {}

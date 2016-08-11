@@ -106,11 +106,11 @@ char Board::GetEmptySquare()
 	return emptySquare;
 }
 
-int Board::GetX(){
+int Board::GetX() const{
 	return x;
 };
 
-int Board::GetY(){
+int Board::GetY() const{
 	return y;
 };
 

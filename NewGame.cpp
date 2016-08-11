@@ -8,41 +8,39 @@ NewGame::~NewGame() {}
 
 void NewGame::buildBoard()
 {	
-	int opt = game->getOptions();
-	game->setDesk(opt * 4, opt * 4);
+	int opt = context->GetOption();
+	context->setDesk(opt * 4, opt * 4);
+}
+
+void NewGame::createAIPlayer()
+{
+	boost::shared_ptr<AIUser> usr = GameBuilder::createAIPlayer();
+	context->addUser(usr);
 }
 
 void NewGame::createHumanPlayer()
 {
-	string name;
+	std::string name;
 	std::cout << "Enter name:" << std::endl;
 	name = InputManager::GetString(10);
 
 	boost::shared_ptr<HumanUser> usr(new HumanUser(name));
-	game->addUser(usr);
+	context->addUser(usr);
 }
 
 void NewGame::buildValidator()
 {
-	int opt = game->getOptions();
+	int opt = context->GetOption();
 	game->setValidator(opt * 3);
 }
 
-void NewGame::createAIPlayer() 
+
+void NewGame::BuildBoardState() {}
+
+void NewGame::BuildOrderOfPlay()
 {
-	boost::shared_ptr<AIUser> usr; 
-	boost::shared_ptr<AlgorithmStrategy> strategy;
-
-	if (game->getOptions() == 1) 
-		strategy = boost::shared_ptr<AlgorithmStrategy>(new RandomStrategy());
-	else 
-		strategy = boost::shared_ptr<AlgorithmStrategy>(new HeuristicAlgorithm(game->getNumberLabelsForWin()));
-	
-	boost::shared_ptr<ContextGame> context = game->getGameContext();
-	strategy->setGameContext(context);
-
-	usr = boost::shared_ptr<AIUser>(new AIUser(strategy));
-	game->addUser(usr);
+	auto players = context->GetUsers();
+	VectorShuffle(players);
 }
 
 void NewGame::buildUser()
@@ -58,19 +56,33 @@ void NewGame::buildUser()
 		num_players--;
 	}
 
+	buildLabels();
 }
 
 void NewGame::buildOptions()
 {
 	std::cout << "Options: easy(1) medium(2) hard(3)" << std::endl;
-	int options = InputManager::GetNumber(1, 3);
+	int opt = InputManager::GetNumber(1, 3);
 
-	game->setOptions(options);
+	context->setOption(opt);
 }
 
 void NewGame::buildLabels()
 {
-	game->assignPawns();
+	std::vector<char> symbols = Pawn::GetSymbols();
+	VectorShuffle(symbols);
+	auto players = context->GetUsers();
+
+	int n = 0;
+	for (auto &player : players)
+	{
+		char label = symbols[n];
+		boost::shared_ptr<Pawn> pawn(new Pawn(label, "red"));
+		context->addUserToPawn(player, pawn);
+		player->setLabel(pawn);
+		n++;
+	}
+	
 }
 
 

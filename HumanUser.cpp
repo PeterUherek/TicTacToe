@@ -16,8 +16,9 @@ int HumanUser::Action()
 	std::cout << "Move (1)" << std::endl;
 	std::cout << "Undo (2)" << std::endl;
 	std::cout << "Redo (3)" << std::endl;
+	std::cout << "Save (4)" << std::endl;
 
-	int key = InputManager::GetNumber(1,3);
+	int key = InputManager::GetNumber(1,4);
 
 	return key;
 }
