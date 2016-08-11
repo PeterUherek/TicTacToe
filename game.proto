@@ -1,0 +1,39 @@
+// See README.txt for information and build instructions.
+
+package game;
+
+option java_package = "com.example.tutorial";
+option java_outer_classname = "GameProtos";
+
+message User {
+  required string name = 1;      
+  required bool human = 2;
+  optional int32 score = 3 [default = 0];
+
+  required string symbol = 4;
+}
+
+message Board {
+  required int32 x = 1;
+  required int32 y = 2;
+}
+
+message Move {
+  required int32 x = 1;
+  required int32 y = 2;
+
+  required string symbol = 3;
+
+}
+
+
+message Game {
+  
+  repeated User user = 1;
+  optional Board board = 2;
+  required int32 options = 3;
+  repeated Move mem = 4;
+  required string turnFor = 5;
+
+}
+
