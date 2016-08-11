@@ -9,8 +9,9 @@ public:
 	SaverLoader();
 	~SaverLoader();
 
+	static bool existFile(const std::string& name);
+	static const std::string saveFile;
 protected:
-	const std::string saveFile = "SaveFile.pb";
 	boost::shared_ptr<game::Game> nGame;
 
 };

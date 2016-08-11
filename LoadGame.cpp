@@ -21,7 +21,8 @@ LoadGame::~LoadGame()
 int LoadGame::LoadFile() 
 {
 	std::fstream input(saveFile, std::ios::in | std::ios::binary);
-	if (!nGame->ParseFromIstream(&input)) {
+	if (!nGame->ParseFromIstream(&input)) 
+	{
 		std::cerr << "Failed to parse address book." << std::endl;
 		return -1;
 	}

@@ -11,9 +11,10 @@
 
 int main()
 {
-
 	GameDirector director;
-	director.SetGame();
+	
+	while(!director.SetGame() == 0);
+
 	director.ConstructGame();
 
 	boost::shared_ptr<IGame> game = director.GetGame();

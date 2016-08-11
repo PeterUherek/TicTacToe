@@ -17,8 +17,14 @@ int GameDirector::SetGame() {
 		return 0;
 	}
 	if (key == 'l' || key == 'L') {
-		gameBuilder = boost::shared_ptr<GameBuilder>(new LoadGame());
-		return 0;
+		if (LoadGame::existFile(LoadGame::saveFile)) {
+			gameBuilder = boost::shared_ptr<GameBuilder>(new LoadGame());
+			return 0;
+		}
+		else {
+			std::cout << "Saved game doesnt exist! Please start new game." << std::endl;
+			return -1;
+		}
 	}
 	return 0;
 }
