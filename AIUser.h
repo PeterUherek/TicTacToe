@@ -14,6 +14,7 @@ public:
 	int Action() override;
 	std::tuple<int, int> Move() override;
 	void setLabel(const boost::shared_ptr<Pawn>& _label) override;
+	bool SaveQuestion() const override;
 
 private:
 	boost::shared_ptr<AlgorithmStrategy> strategy;

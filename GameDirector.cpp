@@ -7,7 +7,7 @@ GameDirector::GameDirector() {}
 
 int GameDirector::SetGame() {
 
-	std::cout << "New game or Load Game? (N/L)" << std::endl;
+	std::cout << "New game or load game? (N/L)" << std::endl;
 	
 	char charCollection[] = { 'n', 'l' };
 	char key = InputManager::GetChar(charCollection);

@@ -27,3 +27,8 @@ void AIUser::setLabel(const boost::shared_ptr<Pawn>& _label)
 	strategy->setPawn(_label);
 }
 
+bool AIUser::SaveQuestion() const
+{
+	return false;
+}
+

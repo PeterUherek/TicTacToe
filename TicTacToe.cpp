@@ -80,7 +80,7 @@ bool TicTacToe::GameLoop()
 				Move(player);
 				context->DrawBoard();
 
-				if (IsWin(player)) 
+				if (IsWin(player))
 				{
 					return true;
 				}
@@ -98,7 +98,9 @@ bool TicTacToe::GameLoop()
 				playerTurn = true;
 				break;
 			case 4:
-				Save(player);
+				if (player->SaveQuestion()){
+					Save(player);
+				}
 				playerTurn = true;
 				break;
 			}
@@ -161,6 +163,7 @@ void TicTacToe::WriteScore()
 
 void TicTacToe::Save(const boost::shared_ptr<User>& player)
 {
+	
 	boost::shared_ptr<SaveGame> saver(new SaveGame());
 	if (saver->Save(*context, *player) >= 0) {
 		std::cout << "You save the game!" << std::endl;

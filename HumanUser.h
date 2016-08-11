@@ -13,5 +13,6 @@ public:
 	// Inherited via User
 	int Action() override;
 	std::tuple<int, int> Move() override;
+	bool SaveQuestion() const override;
 };
 

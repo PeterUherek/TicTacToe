@@ -23,6 +23,17 @@ int HumanUser::Action()
 	return key;
 }
 
+
+bool HumanUser::SaveQuestion() const
+{
+	std::cout << "Do you want to save game? Your old game will be deleted. (Y/N)" << std::endl;
+
+	char charCollection[] = { 'y', 'n' };
+	char key = InputManager::GetChar(charCollection);
+
+	return (key == 'y');
+}
+
 std::tuple<int,int> HumanUser::Move()
 {	
 	std::cout << "Enter coordinates for your turn:" << std::endl;
