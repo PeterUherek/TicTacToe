@@ -13,8 +13,10 @@ public:
 	typedef boost::shared_ptr<Memento> ptrMemento;
 	typedef std::vector<boost::shared_ptr<User>> ptrUserVec;
 	typedef std::map<boost::shared_ptr<User>, boost::shared_ptr<Pawn>, User::UserComparator> LabelMap;
+	
 	ContextGame();
 	~ContextGame();
+	ContextGame(const ContextGame& copy);
 
 	void setDesk(const int& x, const int& y);
 	void addUser(const boost::shared_ptr<User>& usr);
@@ -27,6 +29,7 @@ public:
 	ptrMementoVec GetOldStates() const;
 	ptrMemento GetLastState() const;
 	ptrUserVec GetUsers() const;
+	ptrUserVec& GetUsersMutable();
 	int GetOption() const;
 
 	void Undo();

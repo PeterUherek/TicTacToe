@@ -37,6 +37,7 @@ int GameDirector::ConstructGame()
 	gameBuilder->buildValidator();
 	gameBuilder->buildUser();
 	gameBuilder->BuildBoardState();
+	gameBuilder->BuildOrderOfPlay();
 	return 0;
 }
 

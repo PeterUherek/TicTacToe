@@ -12,7 +12,7 @@ public:
 	std::tuple<int, int> ChooseNextSetp() override;
 	void setPawn(const boost::shared_ptr<Pawn>& pawn) override;
 
-private:
+protected:
 	typedef std::vector<boost::shared_ptr<Memento>> ptrMementoVec;
 	typedef std::vector<std::tuple<int, int>> positionVec;
 
@@ -21,12 +21,15 @@ private:
 	int round = 0;
 	boost::shared_ptr<Pawn> pawn;
 	boost::shared_ptr<Validation> valid;
-	boost::shared_ptr<ContextGame> testContext;
-	
-	// Multithread atributes
-	std::vector<int> scores;
-	boost::mutex guard;
 
+	// Find positions functions
+	ptrMementoVec SelectPositions(Board &board, const Pawn& pawn);
+	positionVec ExtractOptionalMoves(Board &board, const Memento& mem);
+	void UniquePositions(HeuristicAlgorithm::positionVec& positions);
+	positionVec PrepareOptionalMoves(Board &board, const Pawn& pawn);
+	void GenerateOptionalPositions(Board& board, const Memento& mem, positionVec& positions);
+
+private:
 	// Functions
 	std::tuple<int, int> TryMoves(Board& board, const boost::shared_ptr<Pawn>& pawn);
 	std::tuple<int, int> TryMovesMultithread(Board& board, const boost::shared_ptr<Pawn>& pawn);
@@ -35,13 +38,6 @@ private:
 
 	boost::shared_ptr<Pawn> ChooseBestStrategy();
 	std::tuple<int, int> FirstRound();
-
-	// Find positions functions
-	ptrMementoVec SelectPositions(Board &board, const Pawn& pawn);
-	positionVec ExtractOptionalMoves(Board &board, const Memento& mem);
-	void UniquePositions(HeuristicAlgorithm::positionVec& positions);
-	positionVec PrepareOptionalMoves(Board &board, const Pawn& pawn);
-	void GenerateOptionalPositions(Board& board, const Memento& mem, positionVec& positions);
 
 };
 

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "HeuristicAlgorithm.h"
 #include "RandomStrategy.h"
+#include "MultithreadWorker.h"
 #include <boost/thread/thread.hpp>
 #include <type_traits>
 
@@ -105,7 +106,7 @@ std::tuple<int, int> HeuristicAlgorithm::TryMovesMultithread(Board& board, const
 	positionVec positions = PrepareOptionalMoves(board, *pawn);
 	boost::thread_group tgroup;
 	std::vector<std::tuple<int,int>> vec;
-	scores.clear();
+	MultithreadWorker::CleanScore();
 
 	std::vector<int> positionsScore;
 	std::tuple<int, int> best;
@@ -128,9 +129,12 @@ std::tuple<int, int> HeuristicAlgorithm::TryMovesMultithread(Board& board, const
 			return std::tuple<int, int>(x, y);
 		}
 		
-		scores.push_back(0);
+		MultithreadWorker::InitScore();
 
-		tgroup.create_thread(boost::bind(&HeuristicAlgorithm::RecursiveFindingMultithread, this, Board(board), counter, pawn, i));
+		boost::shared_ptr<MultithreadWorker> worker(new MultithreadWorker(*context, depth));
+		worker->setPawn(pawn);
+
+		tgroup.create_thread(boost::bind(&MultithreadWorker::RecursiveFindingMultithread, worker, counter, i));
 
 		vec.push_back(std::tuple<int, int>(x, y));
 		context->Undo();
@@ -138,72 +142,11 @@ std::tuple<int, int> HeuristicAlgorithm::TryMovesMultithread(Board& board, const
 	}
 	
 	tgroup.join_all();
-	auto it = std::max_element(scores.begin(), scores.end());
-	int pos = std::distance(scores.begin(), it);	
+	
+	int pos = MultithreadWorker::GetBestScoreIndex();
 	best = vec[pos];
 	return best;
 }
-
-
-void HeuristicAlgorithm::RecursiveFindingMultithread(Board board, int counter, const boost::shared_ptr<Pawn>& pawn, int i)
-{
-	counter++;
-	boost::shared_ptr<Board> boardPtr = boost::make_shared<Board>(board);
-	boost::shared_ptr<Validation> val(new Validation(boardPtr, depth));
-	positionVec positions = PrepareOptionalMoves(board, *pawn);
-	std::vector<int> positionsScore;
-
-	if (counter > depth) {
-		boost::mutex::scoped_lock lock(guard);
-		//std::vector<int>::iterator it = scores.begin() + i;
-		//scores.insert(it,counter);
-		scores[i] = counter;
-		return;
-	}
-
-	for (auto &pos : positions) {
-
-		int x = std::get<0>(pos);
-		int y = std::get<1>(pos);
-
-		Memento mem(pawn, x, y);
-		boardPtr->Add(mem);
-
-		bool result = val->IsWinner(x, y, pawn->GetLabel());
-		positionsScore.push_back(val->GetScore());
-		
-		boardPtr->Undo(mem);
-
-		if (result) {
-			boost::mutex::scoped_lock lock(guard);
-			//std::vector<int>::iterator it = scores.begin() + i;
-			//scores.insert(it, counter);
-			scores[i] = counter;
-			return;
-		}
-	}
-
-	// Find maxium from vector
-	int index = std::distance(std::begin(positionsScore), std::max_element(positionsScore.begin(), positionsScore.end()));
-
-	auto pos = positions[index];
-
-	int x = std::get<0>(pos);
-	int y = std::get<1>(pos);
-
-	boost::shared_ptr<Memento> mem(new Memento(pawn, x, y));
-	int m_score = 0;
-	if (context->TryMove(mem)) {
-		m_score = RecursiveFinding(*boardPtr, counter, pawn, *val);
-		context->Undo();
-	}
-
-	boost::mutex::scoped_lock lock(guard);
-	//std::vector<int>::iterator it = scores.begin() + i;
-	//scores.insert(it, m_score);
-	scores.at(i) = m_score;
-}
-
 
 
 int HeuristicAlgorithm::RecursiveFinding(Board& board, int counter, const boost::shared_ptr<Pawn>& pawn, Validation& valid)
@@ -312,24 +255,24 @@ std::tuple<int, int> HeuristicAlgorithm::ChooseNextSetp()
 		valid = boost::shared_ptr<Validation>(new Validation(boardPtr, depth));
 		boost::shared_ptr<Pawn> pawn = ChooseBestStrategy();
 		
-		clock_t begin = clock();
+		//clock_t begin = clock();
 		std::tuple<int, int> best = TryMovesMultithread(*boardPtr, pawn);
-		clock_t end = clock();
+		//clock_t end = clock();
 
-		double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+		//double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 
-		std::cout << "Multithread function: " << elapsed_secs << std::endl;
+		/**
+		//std::cout << "Multithread function: " << elapsed_secs << std::endl;
 
 		begin = clock();
-	  // best = TryMoves(*boardPtr, pawn);
+		///best = TryMoves(*boardPtr, pawn);
 		end = clock();
 
 		elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 
-	//	std::cout << "NoMultithread function: " << elapsed_secs << std::endl;
-		
+		//std::cout << "NoMultithread function: " << elapsed_secs << std::endl;
+		*/
 
-		
 		return best;
 	}
 }

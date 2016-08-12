@@ -85,9 +85,9 @@ void LoadGame::BuildBoardState()
 
 void LoadGame::BuildOrderOfPlay()
 {
-	auto players = context->GetUsers();
-	std::string name = nGame->turnfor();
+	auto& players = context->GetUsersMutable();
 
+	std::string name = nGame->turnfor();
 	auto it = std::find_if(players.begin(), players.end(),
 		[&name](const boost::shared_ptr<User>& player) {
 		return (player->getName() == name);

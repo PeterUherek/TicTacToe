@@ -32,7 +32,7 @@ bool Validation::IsWinner(const int& x, const int& y, const char& label)
 	//std::cout << "Multithread function: " << elapsed_secs << std::endl;
 
 	begin = clock();
-	IsWinnerNoMultiThread(x, y, label);
+	winner = IsWinnerNoMultiThread(x, y, label);
 	end = clock();
 
 	elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
@@ -77,6 +77,7 @@ bool Validation::IsWinnerNoMultiThread(const int& x, const int& y, const char& l
 
 	score = *std::max_element(vec.begin(), vec.end());
 	vec.clear();
+	return false;
 }
 
 void Validation::IsWinnerMultiThread(const int& x, const int& y, const char& label)

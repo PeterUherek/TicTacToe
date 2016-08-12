@@ -39,7 +39,7 @@ void NewGame::BuildBoardState() {}
 
 void NewGame::BuildOrderOfPlay()
 {
-	auto players = context->GetUsers();
+	auto& players = context->GetUsersMutable();
 	VectorShuffle(players);
 }
 

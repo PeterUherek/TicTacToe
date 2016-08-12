@@ -12,6 +12,15 @@ ContextGame::~ContextGame()
 {
 }
 
+ContextGame::ContextGame(const ContextGame & copy):
+	option(copy.option),
+	labMap(copy.labMap),
+	players(copy.players),
+	oldStates(copy.oldStates),
+	savedStates(copy.savedStates),
+	board(boost::shared_ptr<Board>(new Board(*copy.board))){}
+
+
 void ContextGame::setDesk(const int & x, const int & y)
 {
 	board = boost::shared_ptr<Board>(new Board(x, y));
@@ -64,6 +73,11 @@ ContextGame::ptrMemento ContextGame::GetLastState() const
 }
 
 ContextGame::ptrUserVec ContextGame::GetUsers() const
+{
+	return players;
+}
+
+ContextGame::ptrUserVec& ContextGame::GetUsersMutable()
 {
 	return players;
 }
