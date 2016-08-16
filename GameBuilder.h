@@ -25,6 +25,9 @@ public:
 	virtual void BuildOrderOfPlay() = 0;
 
 protected:
+	static const int mCoeficientSizeofDesk = 4;
+	static const int mCoeficientSizeforWin = 3;
+
 	boost::shared_ptr<IGame> game;
 	boost::shared_ptr<ContextGame> context;
 

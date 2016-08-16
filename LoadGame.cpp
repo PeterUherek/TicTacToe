@@ -133,7 +133,7 @@ void LoadGame::buildLabels()
 void LoadGame::buildValidator()
 {
 	int opt = context->GetOption();
-	game->setValidator(opt * 3);
+	game->setValidator(opt * mCoeficientSizeforWin);
 }
 
 

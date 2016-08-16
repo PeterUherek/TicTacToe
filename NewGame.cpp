@@ -9,7 +9,8 @@ NewGame::~NewGame() {}
 void NewGame::buildBoard()
 {	
 	int opt = context->GetOption();
-	context->setDesk(opt * 4, opt * 4);
+
+	context->setDesk(opt * mCoeficientSizeofDesk, opt * mCoeficientSizeofDesk);
 }
 
 void NewGame::createAIPlayer()
@@ -31,7 +32,7 @@ void NewGame::createHumanPlayer()
 void NewGame::buildValidator()
 {
 	int opt = context->GetOption();
-	game->setValidator(opt * 3);
+	game->setValidator(opt * mCoeficientSizeforWin);
 }
 
 
