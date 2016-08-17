@@ -34,7 +34,6 @@ private:
 	std::tuple<int, int> TryMoves(Board& board, const boost::shared_ptr<Pawn>& pawn);
 	std::tuple<int, int> TryMovesMultithread(Board& board, const boost::shared_ptr<Pawn>& pawn);
 	int RecursiveFinding(Board& board, int counter, const boost::shared_ptr<Pawn>& pawn, Validation& valid);
-	void RecursiveFindingMultithread(Board board, int counter, const boost::shared_ptr<Pawn>& pawn, int index);
 
 	boost::shared_ptr<Pawn> ChooseBestStrategy();
 	std::tuple<int, int> FirstRound();

@@ -1,7 +1,8 @@
 #include "stdafx.h"
 #include "HeuristicAlgorithm.h"
 #include "RandomStrategy.h"
-#include "MultithreadWorker.h"
+#include "HeuristicTask.h"
+#include "ThreadPool.h"
 #include <boost/thread/thread.hpp>
 #include <type_traits>
 
@@ -104,15 +105,17 @@ std::tuple<int, int> HeuristicAlgorithm::TryMoves(Board& board, const boost::sha
 std::tuple<int, int> HeuristicAlgorithm::TryMovesMultithread(Board& board, const boost::shared_ptr<Pawn>& pawn)
 {
 	positionVec positions = PrepareOptionalMoves(board, *pawn);
-	boost::thread_group tgroup;
+	
 	std::vector<std::tuple<int,int>> vec;
-	MultithreadWorker::CleanScore();
+	HeuristicTask::CleanScore();
+
+	boost::shared_ptr<ThreadPool> tPool(new ThreadPool(20));
 
 	std::vector<int> positionsScore;
 	std::tuple<int, int> best;
-	int score = 99;
 	int counter = 1;
-	int i = 0;
+	int index = 0;
+
 	for (auto &pos : positions) {
 
 		int x = std::get<0>(pos);
@@ -129,21 +132,23 @@ std::tuple<int, int> HeuristicAlgorithm::TryMovesMultithread(Board& board, const
 			return std::tuple<int, int>(x, y);
 		}
 		
-		MultithreadWorker::InitScore();
+		HeuristicTask::InitScore();
 
-		boost::shared_ptr<MultithreadWorker> worker(new MultithreadWorker(*context, depth));
-		worker->setPawn(pawn);
+		boost::shared_ptr<HeuristicTask> task(new HeuristicTask(*context, depth,counter,index));
+		task->setPawn(pawn);
 
-		tgroup.create_thread(boost::bind(&MultithreadWorker::RecursiveFindingMultithread, worker, counter, i));
+		tPool->AddTask(task);
+		//tgroup.create_thread(boost::bind(&HeuristicTask::Run, worker, counter, i));
 
 		vec.push_back(std::tuple<int, int>(x, y));
 		context->Undo();
-		i++;
+		index++;
 	}
 	
-	tgroup.join_all();
-	
-	int pos = MultithreadWorker::GetBestScoreIndex();
+	tPool->Finish();
+	tPool->WaitForCompletion();
+
+	int pos = HeuristicTask::GetBestScoreIndex();
 	best = vec[pos];
 	return best;
 }
