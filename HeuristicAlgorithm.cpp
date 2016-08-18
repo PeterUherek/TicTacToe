@@ -109,7 +109,7 @@ std::tuple<int, int> HeuristicAlgorithm::TryMovesMultithread(Board& board, const
 	std::vector<std::tuple<int,int>> vec;
 	HeuristicTask::CleanScore();
 
-	boost::shared_ptr<ThreadPool> tPool(new ThreadPool(20));
+	boost::shared_ptr<ThreadPool> tPool(new ThreadPool(3));
 
 	std::vector<int> positionsScore;
 	std::tuple<int, int> best;
@@ -138,8 +138,7 @@ std::tuple<int, int> HeuristicAlgorithm::TryMovesMultithread(Board& board, const
 		task->setPawn(pawn);
 
 		tPool->AddTask(task);
-		//tgroup.create_thread(boost::bind(&HeuristicTask::Run, worker, counter, i));
-
+	
 		vec.push_back(std::tuple<int, int>(x, y));
 		context->Undo();
 		index++;
@@ -148,8 +147,7 @@ std::tuple<int, int> HeuristicAlgorithm::TryMovesMultithread(Board& board, const
 	tPool->Finish();
 	tPool->WaitForCompletion();
 
-	int pos = HeuristicTask::GetBestScoreIndex();
-	best = vec[pos];
+	best = vec[HeuristicTask::GetBestScoreIndex()];
 	return best;
 }
 
@@ -260,15 +258,14 @@ std::tuple<int, int> HeuristicAlgorithm::ChooseNextSetp()
 		valid = boost::shared_ptr<Validation>(new Validation(boardPtr, depth));
 		boost::shared_ptr<Pawn> pawn = ChooseBestStrategy();
 		
-		//clock_t begin = clock();
+		clock_t begin = clock();
 		std::tuple<int, int> best = TryMovesMultithread(*boardPtr, pawn);
-		//clock_t end = clock();
+		clock_t end = clock();
 
-		//double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+	   double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 
-		/**
-		//std::cout << "Multithread function: " << elapsed_secs << std::endl;
-
+	   std::cout << "Multithread function: " << elapsed_secs << std::endl;
+		 /**
 		begin = clock();
 		///best = TryMoves(*boardPtr, pawn);
 		end = clock();
